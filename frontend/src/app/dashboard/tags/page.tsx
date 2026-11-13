@@ -95,7 +95,7 @@ export default function TagsPage() {
             Create tags to label and target customer segments in bulk campaigns and the inbox
           </p>
         </div>
-        <Button onClick={openCreateModal} className="shadow-sm">
+        <Button onClick={openCreateModal} className="shadow-sm w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Create Tag
         </Button>
@@ -104,7 +104,7 @@ export default function TagsPage() {
       {/* Main Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Tag Name</TableHead>

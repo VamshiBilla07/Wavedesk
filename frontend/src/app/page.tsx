@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   MessageSquare,
@@ -15,19 +17,23 @@ import {
   Check,
   Clock,
   Play,
+  Menu,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
+    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20 overflow-x-hidden">
       {/* 1. Header / Navbar */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm transition-transform group-hover:scale-105 shrink-0">
               <MessageSquare className="w-5 h-5" />
             </div>
             <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
@@ -47,19 +53,69 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <Link href="/auth/login" className="hidden sm:inline-flex">
               <Button variant="ghost" size="sm">Login</Button>
             </Link>
-            <Link href="/auth/signup">
+            <Link href="/auth/signup" className="hidden xs:inline-flex sm:inline-flex">
               <Button size="sm" className="shadow-sm font-medium">
                 Get Started
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </Link>
+
+            {/* Mobile hamburger toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg text-muted-foreground hover:bg-muted"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b bg-card/95 backdrop-blur-lg px-4 pt-2 pb-5 space-y-3 animate-in slide-in-from-top-2 duration-200 shadow-xl">
+            <nav className="flex flex-col space-y-2 text-sm font-medium text-muted-foreground pt-1">
+              <a
+                href="#features"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+              >
+                Features
+              </a>
+              <a
+                href="#testimonials"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+              >
+                Testimonials
+              </a>
+              <a
+                href="#demo"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+              >
+                Platform Demo
+              </a>
+            </nav>
+            <div className="pt-2 border-t grid grid-cols-2 gap-2">
+              <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="w-full">
+                <Button variant="outline" size="sm" className="w-full">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)} className="w-full">
+                <Button size="sm" className="w-full shadow-xs">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="flex-1">
@@ -76,7 +132,7 @@ export default function LandingPage() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.1]">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.15]">
               Scale Your WhatsApp{' '}
               <span className="bg-gradient-to-r from-primary via-emerald-500 to-teal-400 bg-clip-text text-transparent">
                 Communication
@@ -251,7 +307,7 @@ export default function LandingPage() {
 
             <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Feature 1 */}
-              <div className="p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                     <MessageSquare className="w-6 h-6" />
@@ -264,7 +320,7 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 2 */}
-              <div className="p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                     <Users className="w-6 h-6" />
@@ -277,7 +333,7 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 3 */}
-              <div className="p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                     <Send className="w-6 h-6" />
@@ -290,7 +346,7 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 4 */}
-              <div className="p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                     <BarChart3 className="w-6 h-6" />
@@ -303,7 +359,7 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 5 */}
-              <div className="p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                     <FileText className="w-6 h-6" />
@@ -316,7 +372,7 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 6 */}
-              <div className="p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                     <ShieldCheck className="w-6 h-6" />
@@ -348,7 +404,7 @@ export default function LandingPage() {
 
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Testimonial 1 */}
-              <div className="p-8 rounded-2xl border bg-card shadow-sm flex flex-col justify-between relative">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card shadow-sm flex flex-col justify-between relative">
                 <div>
                   <div className="flex items-center gap-1 text-amber-400 mb-6">
                     {[...Array(5)].map((_, i) => (
@@ -366,7 +422,7 @@ export default function LandingPage() {
               </div>
 
               {/* Testimonial 2 */}
-              <div className="p-8 rounded-2xl border bg-card shadow-sm flex flex-col justify-between relative">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card shadow-sm flex flex-col justify-between relative">
                 <div>
                   <div className="flex items-center gap-1 text-amber-400 mb-6">
                     {[...Array(5)].map((_, i) => (
@@ -384,7 +440,7 @@ export default function LandingPage() {
               </div>
 
               {/* Testimonial 3 */}
-              <div className="p-8 rounded-2xl border bg-card shadow-sm flex flex-col justify-between relative">
+              <div className="p-6 sm:p-8 rounded-2xl border bg-card shadow-sm flex flex-col justify-between relative">
                 <div>
                   <div className="flex items-center gap-1 text-amber-400 mb-6">
                     {[...Array(5)].map((_, i) => (

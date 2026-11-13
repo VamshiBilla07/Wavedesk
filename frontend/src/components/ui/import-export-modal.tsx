@@ -86,11 +86,11 @@ export function ImportExportModal({
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-xl bg-card border rounded-2xl shadow-2xl p-6 z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-4 border-b mb-5">
+      <div className="relative w-full max-w-xl bg-card border rounded-2xl shadow-2xl p-4 sm:p-6 z-10 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b mb-4 sm:mb-5">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-lg">Import / Export Customers</h3>
+            <h3 className="font-bold text-base sm:text-lg">Import / Export Customers</h3>
           </div>
           <button
             onClick={onClose}
@@ -102,14 +102,14 @@ export function ImportExportModal({
 
         <div className="space-y-6">
           {/* Export section */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40 border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/40 border">
             <div>
               <h4 className="font-semibold text-sm">Export Customer Contacts</h4>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Download all audience records, tags, and contact categories as a CSV.
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={handleExport}>
+            <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto shrink-0">
               <Download className="w-4 h-4 mr-2" />
               Export CSV
             </Button>
