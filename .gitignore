@@ -17,6 +17,7 @@ dist/
 build/
 .next/
 out/
+.vercel/
 
 # Logs
 npm-debug.log*
