@@ -1,0 +1,39 @@
+const fs = require('fs');
+const path = require('path');
+
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+
+// Generate simple SVG icon for Wavedesk
+const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="100" fill="#25D366" />
+  <path d="M256 96C167.6 96 96 167.6 96 256c0 31.4 9 60.8 24.6 85.8L96 416l76.4-24.2C196.2 406.8 225.2 416 256 416c88.4 0 160-71.6 160-160S344.4 96 256 96z" fill="#FFFFFF"/>
+  <path d="M256 128c70.7 0 128 57.3 128 128s-57.3 128-128 128c-24.8 0-48-7.1-67.6-19.4l-4.8-3-46.8 14.8 14.9-45.5-3.1-4.9C135.2 305.8 128 281.8 128 256c0-70.7 57.3-128 128-128z" fill="#25D366"/>
+  <path d="M220 200c0-11 9-20 20-20h72c11 0 20 9 20 20s-9 20-20 20h-72c-11 0-20-9-20-20zm0 56c0-11 9-20 20-20h72c11 0 20 9 20 20s-9 20-20 20h-72c-11 0-20-9-20-20zm0 56c0-11 9-20 20-20h48c11 0 20 9 20 20s-9 20-20 20h-48c-11 0-20-9-20-20z" fill="#FFFFFF"/>
+</svg>`;
+
+fs.writeFileSync(path.join(publicDir, 'icon.svg'), svgIcon, 'utf8');
+
+// Manifest file
+const manifest = {
+  name: "Wavedesk CRM",
+  short_name: "Wavedesk",
+  description: "WhatsApp Business API CRM Platform",
+  start_url: "/dashboard",
+  display: "standalone",
+  background_color: "#ffffff",
+  theme_color: "#25D366",
+  icons: [
+    {
+      src: "/icon.svg",
+      sizes: "512x512",
+      type: "image/svg+xml",
+      purpose: "any maskable"
+    }
+  ]
+};
+
+fs.writeFileSync(path.join(publicDir, 'manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
+console.log('Generated PWA icon and manifest.json in public/');

@@ -1,0 +1,17 @@
+{
+  "name": "Wavedesk CRM",
+  "short_name": "Wavedesk",
+  "description": "WhatsApp Business API CRM Platform",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#25D366",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

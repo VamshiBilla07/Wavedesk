@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id             String        @id @default(cuid())
+  name           String
+  phoneNumberId  String?       @unique
+  wabaId         String?
+  encAccessToken String?       // AES-256-GCM payload
+  encAppSecret   String?
+  verifyToken    String?
+  createdAt      DateTime      @default(now())
+  users          User[]
+  customers      Customer[]
+  contactTypes   ContactType[]
+  tags           Tag[]
+  templates      Template[]
+  campaigns      Campaign[]
+  messages       Message[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  companyId    String
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(AGENT)
+  createdAt    DateTime @default(now())
+  company      Company  @relation(fields: [companyId], references: [id])
+}
+
+model ContactType {
+  id        String     @id @default(cuid())
+  companyId String
+  name      String
+  color     String?
+  company   Company    @relation(fields: [companyId], references: [id])
+  customers Customer[]
+
+  @@unique([companyId, name])
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  companyId String
+  name      String
+  color     String?
+  company   Company    @relation(fields: [companyId], references: [id])
+  customers Customer[]
+
+  @@unique([companyId, name])
+}
+
+model Customer {
+  id                    String              @id @default(cuid())
+  companyId             String
+  phone                 String              // E.164 digits, no +
+  name                  String?
+  email                 String?
+  contactTypeId         String?
+  attributes            Json?
+  optedOut              Boolean             @default(false)
+  unreadCount           Int                 @default(0)
+  lastMessageAt         DateTime?
+  lastCustomerMessageAt DateTime?           // drives the 24-hour window
+  createdAt             DateTime            @default(now())
+  company               Company             @relation(fields: [companyId], references: [id])
+  contactType           ContactType?        @relation(fields: [contactTypeId], references: [id])
+  tags                  Tag[]
+  messages              Message[]
+  recipients            CampaignRecipient[]
+
+  @@unique([companyId, phone])
+  @@index([companyId, lastMessageAt])
+}
+
+model Message {
+  id           String        @id @default(cuid())
+  companyId    String
+  customerId   String
+  waMessageId  String?       @unique
+  direction    Direction
+  type         MessageType   @default(TEXT)
+  body         String?
+  mediaUrl     String?
+  templateName String?
+  status       MessageStatus @default(PENDING)
+  errorCode    String?
+  errorMessage String?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readAt       DateTime?
+  createdAt    DateTime      @default(now())
+  company      Company       @relation(fields: [companyId], references: [id])
+  customer     Customer      @relation(fields: [customerId], references: [id])
+
+  @@index([customerId, createdAt])
+}
+
+model Template {
+  id           String           @id @default(cuid())
+  companyId    String
+  metaId       String?
+  name         String
+  language     String           @default("en_US")
+  category     TemplateCategory
+  status       TemplateStatus   @default(PENDING)
+  components   Json
+  rejectReason String?
+  company      Company          @relation(fields: [companyId], references: [id])
+  campaigns    Campaign[]
+
+  @@unique([companyId, name, language])
+}
+
+model Campaign {
+  id          String              @id @default(cuid())
+  companyId   String
+  templateId  String
+  name        String
+  status      CampaignStatus      @default(DRAFT)
+  audience    Json                // { tagIds, contactTypeIds, customerIds }
+  variableMap Json?
+  total       Int                 @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime            @default(now())
+  company     Company             @relation(fields: [companyId], references: [id])
+  template    Template            @relation(fields: [templateId], references: [id])
+  recipients  CampaignRecipient[]
+}
+
+model CampaignRecipient {
+  id           String        @id @default(cuid())
+  campaignId   String
+  customerId   String
+  waMessageId  String?       @unique
+  status       MessageStatus @default(PENDING)
+  attempts     Int           @default(0)
+  errorCode    String?
+  errorMessage String?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readAt       DateTime?
+  campaign     Campaign      @relation(fields: [campaignId], references: [id])
+  customer     Customer      @relation(fields: [customerId], references: [id])
+
+  @@unique([campaignId, customerId])
+  @@index([campaignId, status])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  AGENT
+}
+
+enum Direction {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  TEMPLATE
+  OTHER
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum TemplateCategory {
+  MARKETING
+  UTILITY
+  AUTHENTICATION
+}
+
+enum TemplateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAUSED
+}
+
+enum CampaignStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+  FAILED
+}
