@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../services/database';
 import { authenticate } from '../middleware/auth';
+import { getOrSet, invalidateCompany } from '../services/cache';
 import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
@@ -17,13 +18,18 @@ const contactTypeSchema = z.object({
  */
 router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const contactTypes = await prisma.contactType.findMany({
-      where: { companyId: req.user!.companyId },
-      include: {
-        _count: { select: { customers: true } },
-      },
-      orderBy: { name: 'asc' },
-    });
+    const companyId = req.user!.companyId;
+    const cacheKey = `co:${companyId}:contact-types:list`;
+
+    const contactTypes = await getOrSet(cacheKey, 120, () =>
+      prisma.contactType.findMany({
+        where: { companyId },
+        include: {
+          _count: { select: { customers: true } },
+        },
+        orderBy: { name: 'asc' },
+      })
+    );
 
     res.status(200).json({ contactTypes });
   } catch (err) {
@@ -36,15 +42,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
  */
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const companyId = req.user!.companyId;
     const input = contactTypeSchema.parse(req.body);
 
     const contactType = await prisma.contactType.create({
       data: {
-        companyId: req.user!.companyId,
+        companyId,
         name: input.name,
         color: input.color || '#3B82F6',
       },
     });
+
+    await invalidateCompany(companyId, 'contact-types');
 
     res.status(201).json({ contactType });
   } catch (err) {
@@ -71,6 +80,8 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction): Pr
       where: { id: existing.id },
       data: input,
     });
+
+    await invalidateCompany(req.user!.companyId, 'contact-types');
 
     res.status(200).json({ contactType });
   } catch (err) {
@@ -100,6 +111,8 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction): P
     await prisma.contactType.delete({
       where: { id: existing.id },
     });
+
+    await invalidateCompany(req.user!.companyId, 'contact-types');
 
     res.status(200).json({ success: true, message: 'Contact type deleted' });
   } catch (err) {

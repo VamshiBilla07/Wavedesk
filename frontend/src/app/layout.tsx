@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
+import { PWAPrompt } from '@/components/pwa-prompt';
 
 export const metadata: Metadata = {
   title: 'Wavedesk - WhatsApp Business API CRM',
@@ -20,7 +21,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <PWAPrompt />
+        </Providers>
       </body>
     </html>
   );

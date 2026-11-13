@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { TemplateCategory, TemplateStatus, Prisma } from '@prisma/client';
 import { prisma } from '../services/database';
 import { authenticate } from '../middleware/auth';
+import { getOrSet, invalidateCompany } from '../services/cache';
 import { createTemplate, listTemplates } from '../services/whatsapp';
 import { emitToCompany } from '../services/socket';
 import { AppError } from '../middleware/errorHandler';
@@ -42,10 +43,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
       where.status = status;
     }
 
-    const templates = await prisma.template.findMany({
-      where,
-      orderBy: { name: 'asc' },
-    });
+    const cacheKey = `co:${companyId}:templates:${category || 'all'}:${status || 'all'}`;
+    const templates = await getOrSet(cacheKey, 60, () =>
+      prisma.template.findMany({
+        where,
+        orderBy: { name: 'asc' },
+      })
+    );
 
     res.status(200).json({ templates });
   } catch (err) {
@@ -139,6 +143,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       status: template.status,
     });
 
+    await invalidateCompany(companyId, 'templates');
+
     res.status(201).json({ template });
   } catch (err) {
     next(err);
@@ -165,6 +171,8 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction): P
     await prisma.template.delete({
       where: { id: templateId },
     });
+
+    await invalidateCompany(companyId, 'templates');
 
     res.status(200).json({ success: true, message: 'Template deleted' });
   } catch (err) {
@@ -301,6 +309,8 @@ router.post('/sync', async (req: Request, res: Response, next: NextFunction): Pr
         });
       }
     }
+
+    await invalidateCompany(companyId, 'templates');
 
     const templates = await prisma.template.findMany({
       where: { companyId },

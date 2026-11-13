@@ -180,31 +180,42 @@ describe('Campaigns Routes & Background Sending Engine', () => {
   });
 
   it('supports pause and resume lifecycle transitions', async () => {
-    const draft = await prisma.campaign.create({
+    const campaign1 = await prisma.campaign.create({
       data: {
         companyId,
         templateId: approvedTemplateId,
         name: 'Pause Resume Test',
         status: CampaignStatus.RUNNING,
         audience: { all: true },
-        total: 0,
+        total: 10,
       },
     });
 
     const pauseRes = await request(app)
-      .post(`/api/campaigns/${draft.id}/pause`)
+      .post(`/api/campaigns/${campaign1.id}/pause`)
       .set('Cookie', authCookie);
     expect(pauseRes.status).toBe(200);
     expect(pauseRes.body.campaign.status).toBe(CampaignStatus.PAUSED);
 
     const resumeRes = await request(app)
-      .post(`/api/campaigns/${draft.id}/resume`)
+      .post(`/api/campaigns/${campaign1.id}/resume`)
       .set('Cookie', authCookie);
     expect(resumeRes.status).toBe(200);
     expect(resumeRes.body.campaign.status).toBe(CampaignStatus.RUNNING);
 
+    const campaign2 = await prisma.campaign.create({
+      data: {
+        companyId,
+        templateId: approvedTemplateId,
+        name: 'Cancel Test',
+        status: CampaignStatus.RUNNING,
+        audience: { all: true },
+        total: 10,
+      },
+    });
+
     const cancelRes = await request(app)
-      .post(`/api/campaigns/${draft.id}/cancel`)
+      .post(`/api/campaigns/${campaign2.id}/cancel`)
       .set('Cookie', authCookie);
     expect(cancelRes.status).toBe(200);
     expect(cancelRes.body.campaign.status).toBe(CampaignStatus.CANCELLED);

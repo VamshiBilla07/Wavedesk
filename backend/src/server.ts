@@ -17,6 +17,8 @@ import customersRouter from './routes/customers';
 import messagesRouter from './routes/messages';
 import templatesRouter from './routes/templates';
 import campaignsRouter from './routes/campaigns';
+import analyticsRouter from './routes/analytics';
+import { authLimiter, apiLimiter, webhookLimiter } from './middleware/rateLimiter';
 import { resumeRunningCampaigns } from './services/whatsapp';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -111,6 +113,12 @@ app.get('/ready', async (_req: Request, res: Response) => {
   }
 });
 
+// Rate limiting middleware
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
+app.use('/api/webhooks', webhookLimiter);
+app.use('/api', apiLimiter);
+
 // API Routes
 app.use('/api/auth', authRouter);
 app.use('/api/webhooks', webhooksRouter);
@@ -121,6 +129,7 @@ app.use('/api/customers', customersRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/campaigns', campaignsRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // Centralized error handling middleware
 app.use(errorHandler);

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../services/database';
 import { authenticate } from '../middleware/auth';
+import { getOrSet, invalidateCompany } from '../services/cache';
 import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
@@ -23,13 +24,18 @@ const assignTagsSchema = z.object({
  */
 router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const tags = await prisma.tag.findMany({
-      where: { companyId: req.user!.companyId },
-      include: {
-        _count: { select: { customers: true } },
-      },
-      orderBy: { name: 'asc' },
-    });
+    const companyId = req.user!.companyId;
+    const cacheKey = `co:${companyId}:tags:list`;
+
+    const tags = await getOrSet(cacheKey, 120, () =>
+      prisma.tag.findMany({
+        where: { companyId },
+        include: {
+          _count: { select: { customers: true } },
+        },
+        orderBy: { name: 'asc' },
+      })
+    );
 
     res.status(200).json({ tags });
   } catch (err) {
@@ -42,15 +48,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
  */
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const companyId = req.user!.companyId;
     const input = tagSchema.parse(req.body);
 
     const tag = await prisma.tag.create({
       data: {
-        companyId: req.user!.companyId,
+        companyId,
         name: input.name,
         color: input.color || '#10B981',
       },
     });
+
+    await invalidateCompany(companyId, 'tags');
 
     res.status(201).json({ tag });
   } catch (err) {
@@ -78,6 +87,8 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction): Pr
       data: input,
     });
 
+    await invalidateCompany(req.user!.companyId, 'tags');
+
     res.status(200).json({ tag });
   } catch (err) {
     next(err);
@@ -100,6 +111,8 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction): P
     await prisma.tag.delete({
       where: { id: existing.id },
     });
+
+    await invalidateCompany(req.user!.companyId, 'tags');
 
     res.status(200).json({ success: true, message: 'Tag deleted successfully' });
   } catch (err) {
