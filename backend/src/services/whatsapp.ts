@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import axios, { AxiosError } from 'axios';
-import { Direction, MessageStatus, MessageType } from '@prisma/client';
+import { Direction, MessageStatus, MessageType, CampaignStatus, TemplateStatus, Customer } from '@prisma/client';
 import { prisma } from './database';
 import { decrypt } from './encryption';
 import { normalizePhone } from '../validation/common';
@@ -449,6 +449,57 @@ export async function processWebhook(payload: any): Promise<void> {
 
   for (const entry of payload.entry) {
     for (const change of entry.changes || []) {
+      // 1. Template Status Updates from Meta
+      if (change.field === 'message_template_status_update') {
+        const val = change.value;
+        if (!val) continue;
+
+        const wabaId = entry.id;
+        let company = wabaId ? await prisma.company.findFirst({ where: { wabaId } }) : null;
+        if (!company) {
+          company = await prisma.company.findFirst();
+        }
+        if (!company) continue;
+
+        const templateName = val.message_template_name;
+        const templateLanguage = val.message_template_language || 'en_US';
+        const rawStatus = (val.event || val.status || '').toUpperCase();
+        let targetStatus: TemplateStatus = TemplateStatus.PENDING;
+        if (rawStatus === 'APPROVED') targetStatus = TemplateStatus.APPROVED;
+        else if (rawStatus === 'REJECTED') targetStatus = TemplateStatus.REJECTED;
+        else if (rawStatus === 'PAUSED') targetStatus = TemplateStatus.PAUSED;
+
+        const updated = await prisma.template.updateMany({
+          where: {
+            companyId: company.id,
+            name: templateName,
+            language: templateLanguage,
+          },
+          data: {
+            status: targetStatus,
+            rejectReason: val.reason || null,
+          },
+        });
+
+        if (updated.count > 0) {
+          const tpl = await prisma.template.findFirst({
+            where: {
+              companyId: company.id,
+              name: templateName,
+              language: templateLanguage,
+            },
+          });
+          if (tpl) {
+            emitToCompany(company.id, 'template:status', {
+              templateId: tpl.id,
+              status: tpl.status,
+              rejectReason: tpl.rejectReason,
+            });
+          }
+        }
+        continue;
+      }
+
       if (change.field !== 'messages') continue;
       const value = change.value;
       if (!value) continue;
@@ -474,12 +525,12 @@ export async function processWebhook(payload: any): Promise<void> {
 
       const companyId = company.id;
 
-      // 1. Handle Inbound Messages
+      // 2. Handle Inbound Messages
       for (const msg of value.messages || []) {
         await processInboundMessage(companyId, msg, value.contacts);
       }
 
-      // 2. Handle Status Updates (sent, delivered, read, failed)
+      // 3. Handle Status Updates (sent, delivered, read, failed)
       for (const status of value.statuses || []) {
         await processStatusUpdate(companyId, status);
       }
@@ -663,14 +714,247 @@ async function processStatusUpdate(companyId: string, statusObj: any): Promise<v
 }
 
 /**
- * Campaign sending stubs required for contract; full background loop implemented in Phase 4.
+ * Formats template dynamic parameters for WhatsApp Cloud API.
  */
-export async function runCampaign(_campaignId: string): Promise<void> {
-  // Implemented in Phase 4
+function buildTemplateComponents(
+  variableMap: Record<string, string> | null | undefined,
+  customer: Customer
+): Array<{ type: string; parameters: Array<{ type: string; text: string }> }> | undefined {
+  if (!variableMap || Object.keys(variableMap).length === 0) {
+    return undefined;
+  }
+
+  const sortedKeys = Object.keys(variableMap).sort((a, b) => {
+    const na = parseInt(a, 10);
+    const nb = parseInt(b, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+
+  const parameters = sortedKeys.map((key) => {
+    const fieldOrVal = variableMap[key];
+    let resolved = '';
+
+    if (fieldOrVal === 'name') {
+      resolved = customer.name || 'there';
+    } else if (fieldOrVal === 'phone') {
+      resolved = customer.phone;
+    } else if (fieldOrVal === 'email') {
+      resolved = customer.email || '';
+    } else {
+      const attrs = (customer.attributes as Record<string, unknown> | null) || {};
+      if (attrs[fieldOrVal] !== undefined) {
+        resolved = String(attrs[fieldOrVal]);
+      } else {
+        resolved = fieldOrVal;
+      }
+    }
+
+    return { type: 'text', text: resolved };
+  });
+
+  return [
+    {
+      type: 'body',
+      parameters,
+    },
+  ];
 }
 
+/**
+ * Emits live campaign progress metrics to the company socket room.
+ */
+async function emitCampaignProgress(companyId: string, campaignId: string): Promise<void> {
+  const counts = await prisma.campaignRecipient.groupBy({
+    by: ['status'],
+    where: { campaignId },
+    _count: { status: true },
+  });
+
+  let sent = 0;
+  let delivered = 0;
+  let read = 0;
+  let failed = 0;
+
+  for (const c of counts) {
+    if (c.status === MessageStatus.SENT) sent = c._count.status;
+    else if (c.status === MessageStatus.DELIVERED) delivered = c._count.status;
+    else if (c.status === MessageStatus.READ) read = c._count.status;
+    else if (c.status === MessageStatus.FAILED) failed = c._count.status;
+  }
+
+  const total = await prisma.campaignRecipient.count({ where: { campaignId } });
+
+  emitToCompany(companyId, 'campaign:progress', {
+    campaignId,
+    sent: sent + delivered + read,
+    delivered: delivered + read,
+    read,
+    failed,
+    total,
+  });
+}
+
+/**
+ * Resumable, rate-limited background sender loop for a campaign.
+ */
+export async function runCampaign(campaignId: string): Promise<void> {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id: campaignId },
+    include: { template: true },
+  });
+
+  if (!campaign || campaign.status !== CampaignStatus.RUNNING) {
+    return;
+  }
+
+  const ratePerSec = parseInt(process.env.CAMPAIGN_RATE_PER_SEC || '20', 10) || 20;
+  const delayMs = Math.max(Math.floor(1000 / ratePerSec), 10);
+
+  const recipients = await prisma.campaignRecipient.findMany({
+    where: { campaignId, status: MessageStatus.PENDING },
+    include: { customer: true },
+    orderBy: { id: 'asc' },
+  });
+
+  const variableMap = (campaign.variableMap as Record<string, string> | null) || null;
+
+  for (let i = 0; i < recipients.length; i++) {
+    const recipient = recipients[i];
+
+    // Check campaign status before sending each message (supports live pause / cancel)
+    const checkCampaign = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { status: true },
+    });
+
+    if (!checkCampaign || checkCampaign.status !== CampaignStatus.RUNNING) {
+      break;
+    }
+
+    if (recipient.customer.optedOut) {
+      await prisma.campaignRecipient.update({
+        where: { id: recipient.id },
+        data: {
+          status: MessageStatus.FAILED,
+          errorCode: 'OPTED_OUT',
+          errorMessage: 'Customer has opted out of messaging',
+          attempts: { increment: 1 },
+        },
+      });
+      continue;
+    }
+
+    try {
+      const components = buildTemplateComponents(variableMap, recipient.customer);
+
+      const sendResult = await sendTemplate({
+        companyId: campaign.companyId,
+        toPhone: recipient.customer.phone,
+        templateName: campaign.template.name,
+        language: campaign.template.language,
+        components,
+      });
+
+      await prisma.campaignRecipient.update({
+        where: { id: recipient.id },
+        data: {
+          waMessageId: sendResult.waMessageId,
+          status: MessageStatus.SENT,
+          sentAt: new Date(),
+          attempts: { increment: 1 },
+        },
+      });
+
+      await prisma.message.create({
+        data: {
+          companyId: campaign.companyId,
+          customerId: recipient.customerId,
+          waMessageId: sendResult.waMessageId,
+          direction: Direction.OUTBOUND,
+          type: MessageType.TEMPLATE,
+          templateName: campaign.template.name,
+          body: `Template: ${campaign.template.name}`,
+          status: MessageStatus.SENT,
+          sentAt: new Date(),
+        },
+      });
+
+      await prisma.customer.update({
+        where: { id: recipient.customerId },
+        data: { lastMessageAt: new Date() },
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Campaign dispatch failed';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorCode = (err as any)?.code || 'SEND_FAILED';
+
+      await prisma.campaignRecipient.update({
+        where: { id: recipient.id },
+        data: {
+          status: MessageStatus.FAILED,
+          errorCode,
+          errorMessage,
+          attempts: { increment: 1 },
+        },
+      });
+    }
+
+    // Rate-limiting throttle
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+    // Emit live progress periodically
+    if (i % 5 === 0 || i === recipients.length - 1) {
+      await emitCampaignProgress(campaign.companyId, campaignId);
+    }
+  }
+
+  // Check completion
+  const remainingPending = await prisma.campaignRecipient.count({
+    where: { campaignId, status: MessageStatus.PENDING },
+  });
+
+  const checkStatus = await prisma.campaign.findUnique({
+    where: { id: campaignId },
+    select: { status: true },
+  });
+
+  if (remainingPending === 0 && checkStatus?.status === CampaignStatus.RUNNING) {
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        status: CampaignStatus.COMPLETED,
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  await emitCampaignProgress(campaign.companyId, campaignId);
+}
+
+/**
+ * Resumes campaigns in RUNNING state upon server boot.
+ */
 export async function resumeRunningCampaigns(): Promise<void> {
-  // Implemented in Phase 4
+  try {
+    const running = await prisma.campaign.findMany({
+      where: { status: CampaignStatus.RUNNING },
+      select: { id: true },
+    });
+
+    for (const c of running) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.log(`[Campaigns] Resuming background campaign ${c.id}`);
+      }
+      setImmediate(() => {
+        runCampaign(c.id).catch((err) => {
+          console.error(`[Campaigns] Error resuming campaign ${c.id}:`, err);
+        });
+      });
+    }
+  } catch (err) {
+    console.error('[Campaigns] Failed to resume campaigns on startup:', err);
+  }
 }
 
 export default {

@@ -15,6 +15,9 @@ import contactTypesRouter from './routes/contactTypes';
 import tagsRouter from './routes/tags';
 import customersRouter from './routes/customers';
 import messagesRouter from './routes/messages';
+import templatesRouter from './routes/templates';
+import campaignsRouter from './routes/campaigns';
+import { resumeRunningCampaigns } from './services/whatsapp';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load environment variables
@@ -116,6 +119,8 @@ app.use('/api/contact-types', contactTypesRouter);
 app.use('/api/tags', tagsRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/templates', templatesRouter);
+app.use('/api/campaigns', campaignsRouter);
 
 // Centralized error handling middleware
 app.use(errorHandler);
@@ -129,6 +134,7 @@ export const io = initSocket(server);
 if (process.env.NODE_ENV !== 'test') {
   server.listen(config.PORT, () => {
     console.log(`[Wavedesk API] Server running on port ${config.PORT} (${config.NODE_ENV})`);
+    resumeRunningCampaigns();
   });
 
   const shutdown = async (signal: string) => {
