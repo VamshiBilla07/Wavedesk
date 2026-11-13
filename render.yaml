@@ -1,0 +1,51 @@
+databases:
+  - name: wavedesk-db
+    databaseName: wavedesk
+    user: wavedesk
+    plan: free
+
+services:
+  # Managed Redis (Key-Value)
+  - type: redis
+    name: wavedesk-redis
+    plan: free
+    ipAllowList: []
+
+  # Express API & WebSocket Web Service
+  - type: web
+    name: wavedesk-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run db:generate && npm run build && npm run db:deploy && npm run db:seed
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wavedesk-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: wavedesk-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        value: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      - key: META_GRAPH_VERSION
+        value: v21.0
+      - key: META_APP_SECRET
+        value: mock_app_secret
+      - key: META_VERIFY_TOKEN
+        value: wavedesk_verify_token_123
+      - key: WHATSAPP_MOCK
+        value: "true"
+      - key: CORS_ORIGIN
+        value: http://localhost:3000, https://frontend-murex-one-59.vercel.app
+      - key: CAMPAIGN_RATE_PER_SEC
+        value: "20"
