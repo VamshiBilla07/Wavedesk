@@ -39,12 +39,16 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      await api.post('/auth/signup', {
+      const res = await api.post<{ token?: string }>('/auth/signup', {
         companyName,
         name,
         email,
         password,
       });
+      if (res && res.token) {
+        document.cookie = `wavedesk_token=${res.token}; path=/; max-age=604800; SameSite=Lax; secure`;
+        localStorage.setItem('wavedesk_token', res.token);
+      }
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       router.push('/dashboard');
       router.refresh();
