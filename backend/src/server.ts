@@ -41,6 +41,7 @@ const envSchema = z.object({
     .string()
     .default('20')
     .transform((val) => parseInt(val, 10)),
+  GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 // Fail-fast environment validation
@@ -117,6 +118,7 @@ app.get('/ready', async (_req: Request, res: Response) => {
 // Rate limiting middleware
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);
+app.use('/api/auth/google', authLimiter);
 app.use('/api/webhooks', webhookLimiter);
 app.use('/api', apiLimiter);
 

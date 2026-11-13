@@ -16,6 +16,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { api, ApiError } from '@/lib/api';
+import { GoogleButton } from '@/components/auth/google-button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -73,6 +74,17 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          <GoogleButton mode="login" onError={(err) => setError(err)} />
+
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="email" required>
