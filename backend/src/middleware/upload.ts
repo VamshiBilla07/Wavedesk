@@ -58,7 +58,7 @@ export const upload = multer({
 
 export const uploadCsv = multer({
   storage,
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const isCsv =
       file.mimetype === 'text/csv' ||
       file.mimetype === 'application/vnd.ms-excel' ||
