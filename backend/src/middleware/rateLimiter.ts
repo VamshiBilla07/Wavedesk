@@ -25,6 +25,7 @@ export const authLimiter = rateLimit({
   max: isTest ? 10000 : 15,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
@@ -43,6 +44,7 @@ export const apiLimiter = rateLimit({
   max: isTest ? 10000 : 120,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',
@@ -61,6 +63,7 @@ export const webhookLimiter = rateLimit({
   max: isTest ? 10000 : 300,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     error: {
       code: 'TOO_MANY_REQUESTS',

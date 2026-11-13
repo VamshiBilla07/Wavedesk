@@ -54,6 +54,7 @@ if (!parsedEnv.success) {
 export const config = parsedEnv.data;
 
 export const app = express();
+app.set('trust proxy', 1);
 
 // Security and utility middleware
 app.use(helmet());
