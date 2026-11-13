@@ -1,6 +1,6 @@
 # Wavedesk
 
-A modern multi-tenant WhatsApp Business API CRM platform built with Express, PostgreSQL (Prisma), Redis, and Next.js (App Router).
+I built a project called WaveDesk. It’s a WhatsApp CRM platform for businesses. The problem is that most small businesses use WhatsApp to talk to customers, but the normal WhatsApp Business app works on just one phone, so a team can’t share it, and there’s no way to send proper bulk messages or see who actually received and read them. WaveDesk fixes that. It gives businesses a shared inbox where multiple team members can reply to customers, lets them send bulk campaigns using approved message templates, and shows live delivery status like sent, delivered, and read. I built it with Node.js, Express, TypeScript, Next.js, and PostgreSQL, and connected it to Meta’s official WhatsApp Cloud API. Whenever a customer replies or a message status changes, Meta sends a webhook to my server, which saves it and pushes the update to the dashboard instantly using Socket.io. I also added JWT login, encrypted storage for API tokens, rate limiting, and Redis caching to keep it secure and fast.
 
 ## Features
 
