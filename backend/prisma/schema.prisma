@@ -30,7 +30,9 @@ model User {
   companyId    String
   email        String   @unique
   name         String
-  passwordHash String
+  passwordHash String?
+  googleId     String?  @unique
+  avatarUrl    String?
   role         Role     @default(AGENT)
   createdAt    DateTime @default(now())
   company      Company  @relation(fields: [companyId], references: [id])
