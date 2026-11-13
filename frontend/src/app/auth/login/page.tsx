@@ -37,7 +37,11 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await api.post('/auth/login', { email, password });
+      const res = await api.post<{ token?: string }>('/auth/login', { email, password });
+      if (res && res.token) {
+        document.cookie = `wavedesk_token=${res.token}; path=/; max-age=604800; SameSite=Lax; secure`;
+        localStorage.setItem('wavedesk_token', res.token);
+      }
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       router.push('/dashboard');
       router.refresh();

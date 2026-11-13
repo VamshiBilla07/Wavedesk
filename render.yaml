@@ -17,7 +17,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run db:generate && npm run build && npm run db:deploy && npm run db:seed
+    buildCommand: npm install --include=dev && npm run db:generate && npm run build && npm run db:deploy && npm run db:seed
     startCommand: npm run start
     healthCheckPath: /health
     autoDeploy: true
@@ -46,6 +46,6 @@ services:
       - key: WHATSAPP_MOCK
         value: "true"
       - key: CORS_ORIGIN
-        value: http://localhost:3000, https://frontend-murex-one-59.vercel.app
+        value: http://localhost:3000, https://frontend-murex-one-59.vercel.app, https://wavedesk-crm.vercel.app
       - key: CAMPAIGN_RATE_PER_SEC
         value: "20"

@@ -228,17 +228,17 @@ router.post(
 
       const companyId = req.user!.companyId;
       const csvContent = req.file.buffer.toString('utf8');
-      const lines = csvContent.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const lines = csvContent.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
 
       if (lines.length < 2) {
         throw new AppError('BAD_REQUEST', 'CSV file must have a header row and at least one data row', 400);
       }
 
       // Parse header row
-      const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/['"]/g, ''));
-      const phoneIndex = headers.findIndex((h) => h === 'phone' || h.includes('phone') || h === 'mobile');
-      const nameIndex = headers.findIndex((h) => h === 'name' || h.includes('name'));
-      const emailIndex = headers.findIndex((h) => h === 'email');
+      const headers = lines[0].split(',').map((h: string) => h.trim().toLowerCase().replace(/['"]/g, ''));
+      const phoneIndex = headers.findIndex((h: string) => h === 'phone' || h.includes('phone') || h === 'mobile');
+      const nameIndex = headers.findIndex((h: string) => h === 'name' || h.includes('name'));
+      const emailIndex = headers.findIndex((h: string) => h === 'email');
 
       if (phoneIndex === -1) {
         throw new AppError('BAD_REQUEST', 'CSV must contain a "phone" column header', 400);
@@ -252,7 +252,7 @@ router.post(
         const line = lines[i];
         if (!line) continue;
 
-        const cells = line.split(',').map((c) => c.trim().replace(/^["']|["']$/g, ''));
+        const cells = line.split(',').map((c: string) => c.trim().replace(/^["']|["']$/g, ''));
         const rawPhone = cells[phoneIndex] || '';
         const rawName = nameIndex !== -1 ? cells[nameIndex] : '';
         const rawEmail = emailIndex !== -1 ? cells[emailIndex] : '';

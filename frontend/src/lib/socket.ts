@@ -82,15 +82,19 @@ let socket: TypedSocket | null = null;
  * Returns or creates the Socket.io client instance.
  */
 export function getSocket(token?: string): TypedSocket {
+  const authToken =
+    token ||
+    (typeof window !== 'undefined' ? localStorage.getItem('wavedesk_token') || undefined : undefined);
+
   if (!socket) {
     socket = io(SOCKET_URL, {
       withCredentials: true,
       autoConnect: false,
       transports: ['websocket', 'polling'],
-      auth: token ? { token } : undefined,
+      auth: authToken ? { token: authToken } : undefined,
     });
-  } else if (token && socket.auth) {
-    socket.auth = { token };
+  } else if (authToken) {
+    socket.auth = { token: authToken };
   }
 
   return socket;
