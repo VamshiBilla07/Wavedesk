@@ -6,6 +6,7 @@ import { authenticate } from '../middleware/auth';
 import { normalizePhone, phoneSchema } from '../validation/common';
 import { uploadCsv } from '../middleware/upload';
 import { AppError } from '../middleware/errorHandler';
+import { emitToCompany } from '../services/socket';
 
 const router = Router();
 router.use(authenticate);
@@ -173,6 +174,8 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction): Pr
         tags: true,
       },
     });
+
+    emitToCompany(companyId, 'customer:updated', { customer });
 
     res.status(200).json({ customer });
   } catch (err) {

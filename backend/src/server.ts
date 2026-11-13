@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { z } from 'zod';
 import { prisma } from './services/database';
 import { isRedisReady, redis } from './services/cache';
+import { initSocket, closeSocket } from './services/socket';
 import authRouter from './routes/auth';
 import webhooksRouter from './routes/webhooks';
 import settingsRouter from './routes/settings';
@@ -121,6 +122,9 @@ app.use(errorHandler);
 
 export const server = http.createServer(app);
 
+// Initialize Socket.io server
+export const io = initSocket(server);
+
 // Start server if not in test environment
 if (process.env.NODE_ENV !== 'test') {
   server.listen(config.PORT, () => {
@@ -129,6 +133,7 @@ if (process.env.NODE_ENV !== 'test') {
 
   const shutdown = async (signal: string) => {
     console.log(`\n[Wavedesk API] Received ${signal}. Gracefully shutting down...`);
+    await closeSocket();
     server.close(async () => {
       console.log('[Wavedesk API] HTTP server closed.');
       await prisma.$disconnect().catch(() => {});

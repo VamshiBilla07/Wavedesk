@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { useSocket } from '@/components/socket-provider';
 
 interface TagItem {
   id: string;
@@ -82,6 +83,7 @@ function InboxContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const customerIdParam = searchParams.get('customerId');
+  const { isConnected } = useSocket();
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(customerIdParam || null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,7 +100,6 @@ function InboxContent() {
       if (searchTerm) params.set('search', searchTerm);
       return api.get(`/messages/conversations?${params.toString()}`);
     },
-    refetchInterval: 4000, // Poll every 4 seconds until socket is wired in Phase 3
   });
 
   // Auto-select first customer if none selected
@@ -117,7 +118,6 @@ function InboxContent() {
     queryKey: ['messages', selectedCustomerId],
     queryFn: () => api.get(`/messages/${selectedCustomerId}`),
     enabled: Boolean(selectedCustomerId),
-    refetchInterval: 3000,
   });
 
   // Mark as read when thread opens
@@ -217,7 +217,15 @@ function InboxContent() {
             />
           </div>
           <div className="flex items-center justify-between text-xs px-1">
-            <span className="text-muted-foreground font-medium">Conversations</span>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground font-medium">Conversations</span>
+              {isConnected && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live
+                </span>
+              )}
+            </div>
             <button
               onClick={() => setUnreadOnly(!unreadOnly)}
               className={`px-2 py-0.5 rounded-full text-[11px] font-semibold transition-colors ${

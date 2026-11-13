@@ -4,6 +4,7 @@ import { Direction, MessageStatus, MessageType } from '@prisma/client';
 import { prisma } from '../services/database';
 import { authenticate } from '../middleware/auth';
 import { is24HourWindowOpen, sendText, sendTemplate, sendMedia } from '../services/whatsapp';
+import { emitToCompany } from '../services/socket';
 import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
@@ -189,6 +190,8 @@ router.post('/:customerId', async (req: Request, res: Response, next: NextFuncti
       },
     });
 
+    emitToCompany(companyId, 'message:new', { message, customer });
+
     // 2. Dispatch to WhatsApp Cloud API
     try {
       let sendResult: { waMessageId: string };
@@ -233,11 +236,20 @@ router.post('/:customerId', async (req: Request, res: Response, next: NextFuncti
         },
       });
 
+      emitToCompany(companyId, 'message:status', {
+        messageId: updatedMessage.id,
+        waMessageId: updatedMessage.waMessageId,
+        status: MessageStatus.SENT,
+        sentAt: updatedMessage.sentAt,
+      });
+
       // Update customer lastMessageAt
-      await prisma.customer.update({
+      const updatedCustomer = await prisma.customer.update({
         where: { id: customerId },
         data: { lastMessageAt: new Date() },
       });
+
+      emitToCompany(companyId, 'customer:updated', { customer: updatedCustomer });
 
       res.status(201).json({ message: updatedMessage });
     } catch (sendErr) {
@@ -252,6 +264,14 @@ router.post('/:customerId', async (req: Request, res: Response, next: NextFuncti
           errorCode,
           errorMessage,
         },
+      });
+
+      emitToCompany(companyId, 'message:status', {
+        messageId: failedMessage.id,
+        waMessageId: null,
+        status: MessageStatus.FAILED,
+        errorCode: failedMessage.errorCode,
+        errorMessage: failedMessage.errorMessage,
       });
 
       res.status(200).json({ message: failedMessage });
@@ -274,6 +294,14 @@ router.post('/:customerId/read', async (req: Request, res: Response, next: NextF
       where: { id: customerId, companyId },
       data: { unreadCount: 0 },
     });
+
+    const updatedCustomer = await prisma.customer.findFirst({
+      where: { id: customerId, companyId },
+    });
+
+    if (updatedCustomer) {
+      emitToCompany(companyId, 'customer:updated', { customer: updatedCustomer });
+    }
 
     res.status(200).json({ success: true, message: 'Conversation marked as read' });
   } catch (err) {

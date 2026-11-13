@@ -5,6 +5,7 @@ import { prisma } from './database';
 import { decrypt } from './encryption';
 import { normalizePhone } from '../validation/common';
 import { AppError } from '../middleware/errorHandler';
+import { emitToCompany } from './socket';
 
 const GRAPH_VERSION = process.env.META_GRAPH_VERSION || 'v21.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_VERSION}`;
@@ -557,7 +558,7 @@ async function processInboundMessage(companyId: string, msg: any, contacts: any[
 
   // Idempotent insertion: ignore P2002 if waMessageId already recorded
   try {
-    await prisma.message.create({
+    const createdMessage = await prisma.message.create({
       data: {
         companyId,
         customerId: customer.id,
@@ -570,6 +571,9 @@ async function processInboundMessage(companyId: string, msg: any, contacts: any[
         deliveredAt: now,
       },
     });
+
+    emitToCompany(companyId, 'message:new', { message: createdMessage, customer });
+    emitToCompany(companyId, 'customer:updated', { customer });
   } catch (err) {
     // Unique constraint violation on waMessageId means this event was already processed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -644,6 +648,17 @@ async function processStatusUpdate(companyId: string, statusObj: any): Promise<v
   await prisma.campaignRecipient.updateMany({
     where: { waMessageId },
     data: updateData,
+  });
+
+  emitToCompany(companyId, 'message:status', {
+    messageId: message.id,
+    waMessageId,
+    status: targetStatus,
+    sentAt: updateData.sentAt || message.sentAt,
+    deliveredAt: updateData.deliveredAt || message.deliveredAt,
+    readAt: updateData.readAt || message.readAt,
+    errorCode: updateData.errorCode,
+    errorMessage: updateData.errorMessage,
   });
 }
 
