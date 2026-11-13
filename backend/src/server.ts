@@ -8,6 +8,12 @@ import { z } from 'zod';
 import { prisma } from './services/database';
 import { isRedisReady, redis } from './services/cache';
 import authRouter from './routes/auth';
+import webhooksRouter from './routes/webhooks';
+import settingsRouter from './routes/settings';
+import contactTypesRouter from './routes/contactTypes';
+import tagsRouter from './routes/tags';
+import customersRouter from './routes/customers';
+import messagesRouter from './routes/messages';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load environment variables
@@ -103,6 +109,12 @@ app.get('/ready', async (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRouter);
+app.use('/api/webhooks', webhooksRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/api/contact-types', contactTypesRouter);
+app.use('/api/tags', tagsRouter);
+app.use('/api/customers', customersRouter);
+app.use('/api/messages', messagesRouter);
 
 // Centralized error handling middleware
 app.use(errorHandler);
