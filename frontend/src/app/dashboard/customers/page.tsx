@@ -182,12 +182,12 @@ export default function CustomersPage() {
             Manage your WhatsApp customer audience, tags, and segmentation
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setIsImportModalOpen(true)} className="flex-1 sm:flex-none">
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Import / Export
           </Button>
-          <Button onClick={openCreateModal} className="shadow-sm">
+          <Button onClick={openCreateModal} className="flex-1 sm:flex-none shadow-sm">
             <Plus className="w-4 h-4 mr-2" />
             Add Customer
           </Button>
@@ -196,7 +196,7 @@ export default function CustomersPage() {
 
       {/* Filter and Search Bar */}
       <Card>
-        <CardContent className="p-4 flex flex-col md:flex-row gap-3">
+        <CardContent className="p-3 sm:p-4 flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -207,11 +207,11 @@ export default function CustomersPage() {
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:flex gap-2 w-full md:w-auto">
             <Select
               value={selectedContactTypeId}
               onChange={(e) => setSelectedContactTypeId(e.target.value)}
-              className="w-44"
+              className="w-full md:w-44"
             >
               <option value="">All Contact Types</option>
               {typeData?.contactTypes?.map((t) => (
@@ -224,7 +224,7 @@ export default function CustomersPage() {
             <Select
               value={selectedTagId}
               onChange={(e) => setSelectedTagId(e.target.value)}
-              className="w-40"
+              className="w-full md:w-40"
             >
               <option value="">All Tags</option>
               {tagData?.tags?.map((t) => (
@@ -240,7 +240,7 @@ export default function CustomersPage() {
       {/* Customers Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[650px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Customer</TableHead>

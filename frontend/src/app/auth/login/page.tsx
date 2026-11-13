@@ -124,25 +124,6 @@ export default function LoginPage() {
             Sign in
           </Button>
 
-          <div className="w-full p-3 rounded-lg border bg-muted/40 text-xs space-y-1.5">
-            <div className="flex items-center justify-between font-medium text-foreground">
-              <span>Demo Account (for HR & Recruiters):</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('demo@wavedesk.io');
-                  setPassword('Demo@2026!');
-                }}
-                className="text-primary hover:underline font-semibold cursor-pointer"
-              >
-                Auto-fill
-              </button>
-            </div>
-            <div className="text-muted-foreground font-mono flex justify-between text-[11px]">
-              <span>demo@wavedesk.io</span>
-              <span>Demo@2026!</span>
-            </div>
-          </div>
 
           <p className="text-center text-xs text-muted-foreground">
             Don&apos;t have a company account yet?{' '}

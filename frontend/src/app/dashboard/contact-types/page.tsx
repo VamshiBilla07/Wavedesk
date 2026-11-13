@@ -95,7 +95,7 @@ export default function ContactTypesPage() {
             Segment your customers into relationship categories (e.g., Lead, VIP, Partner, Customer)
           </p>
         </div>
-        <Button onClick={openCreateModal} className="shadow-sm">
+        <Button onClick={openCreateModal} className="shadow-sm w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Add Contact Type
         </Button>
@@ -104,7 +104,7 @@ export default function ContactTypesPage() {
       {/* Main Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Category Name</TableHead>

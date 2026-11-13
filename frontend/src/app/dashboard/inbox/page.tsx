@@ -18,9 +18,12 @@ import {
   User,
   Tag as TagIcon,
   FolderTree,
+  ArrowLeft,
+  Info,
+  X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { formatPhone, formatDate } from '@/lib/utils';
+import { formatPhone, formatDate, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -86,6 +89,7 @@ function InboxContent() {
   const { isConnected } = useSocket();
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(customerIdParam || null);
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [messageText, setMessageText] = useState('');
@@ -102,10 +106,12 @@ function InboxContent() {
     },
   });
 
-  // Auto-select first customer if none selected
+  // Auto-select first customer only on desktop (width >= 768px) if none selected
   useEffect(() => {
-    if (!selectedCustomerId && convData?.conversations && convData.conversations.length > 0) {
-      setSelectedCustomerId(convData.conversations[0].customer.id);
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      if (!selectedCustomerId && convData?.conversations && convData.conversations.length > 0) {
+        setSelectedCustomerId(convData.conversations[0].customer.id);
+      }
     }
   }, [convData, selectedCustomerId]);
 
@@ -200,11 +206,16 @@ function InboxContent() {
   const isWindowOpen = threadData?.isWindowOpen ?? false;
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex rounded-2xl border bg-card overflow-hidden shadow-sm">
+    <div className="h-[calc(100dvh-4rem)] md:h-[calc(100vh-6rem)] flex rounded-none md:rounded-2xl border-0 md:border bg-card overflow-hidden shadow-none md:shadow-sm">
       {/* =========================================================================
           LEFT PANE: Customer Conversations List
          ========================================================================= */}
-      <div className="w-80 sm:w-88 border-r flex flex-col shrink-0 bg-muted/10">
+      <div
+        className={cn(
+          'w-full md:w-80 lg:w-88 border-r flex flex-col shrink-0 bg-muted/10',
+          selectedCustomerId ? 'hidden md:flex' : 'flex'
+        )}
+      >
         {/* Search & Filter Header */}
         <div className="p-3 border-b space-y-2 bg-card">
           <div className="relative">
@@ -308,19 +319,34 @@ function InboxContent() {
       {/* =========================================================================
           CENTER PANE: Message History Thread & Composer
          ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background">
+      <div
+        className={cn(
+          'flex-1 flex flex-col min-w-0 bg-background',
+          !selectedCustomerId ? 'hidden md:flex' : 'flex'
+        )}
+      >
         {selectedCustomerId && activeCustomer ? (
           <>
             {/* Thread Header */}
-            <div className="h-14 border-b px-4 flex items-center justify-between bg-card shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="h-14 border-b px-3 sm:px-4 flex items-center justify-between bg-card shrink-0 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                {/* Mobile Back to Chats Button */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedCustomerId(null)}
+                  className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:bg-muted shrink-0"
+                  aria-label="Back to conversations list"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+
                 <Avatar name={activeCustomer.name || activeCustomer.phone} size="sm" />
-                <div>
-                  <div className="font-semibold text-xs text-foreground flex items-center gap-2">
-                    <span>{activeCustomer.name || formatPhone(activeCustomer.phone)}</span>
+                <div className="min-w-0">
+                  <div className="font-semibold text-xs text-foreground flex items-center gap-1.5 truncate">
+                    <span className="truncate">{activeCustomer.name || formatPhone(activeCustomer.phone)}</span>
                     {activeCustomer.contactType && (
                       <span
-                        className="px-1.5 py-0.2 rounded text-[10px] font-medium"
+                        className="hidden sm:inline-flex px-1.5 py-0.2 rounded text-[10px] font-medium shrink-0"
                         style={{
                           backgroundColor: `${activeCustomer.contactType.color || '#3B82F6'}20`,
                           color: activeCustomer.contactType.color || '#3B82F6',
@@ -330,24 +356,37 @@ function InboxContent() {
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">
+                  <div className="text-[10px] text-muted-foreground font-mono truncate">
                     {formatPhone(activeCustomer.phone)}
                   </div>
                 </div>
               </div>
 
-              {/* 24-hr badge */}
-              <div>
-                {isWindowOpen ? (
-                  <Badge variant="success" className="text-[10px] py-0.5">
-                    24h Window Open
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-[10px] py-0.5 text-muted-foreground border-amber-500/40 text-amber-600 dark:text-amber-400">
-                    <Lock className="w-3 h-3 mr-1" />
-                    24h Window Closed
-                  </Badge>
-                )}
+              {/* Right: 24h status badge + Mobile info button */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div>
+                  {isWindowOpen ? (
+                    <Badge variant="success" className="text-[10px] py-0.5">
+                      <span className="hidden xs:inline">24h </span>Open
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] py-0.5 text-muted-foreground border-amber-500/40 text-amber-600 dark:text-amber-400">
+                      <Lock className="w-3 h-3 mr-0.5" />
+                      <span className="hidden xs:inline">24h </span>Closed
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Mobile Info Sheet Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowMobileDetails(true)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted lg:hidden shrink-0"
+                  title="Contact info"
+                  aria-label="Customer info"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -566,6 +605,112 @@ function InboxContent() {
             <div className="space-y-1 text-muted-foreground text-[11px]">
               <div>Last Customer Msg: {activeCustomer.lastCustomerMessageAt ? formatDate(activeCustomer.lastCustomerMessageAt) : 'Never'}</div>
               <div>Window Status: {isWindowOpen ? 'Active (Open)' : 'Expired (Closed)'}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Customer Details Sheet */}
+      {showMobileDetails && activeCustomer && (
+        <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
+          <div
+            className="fixed inset-0 bg-background/80 backdrop-blur-xs transition-opacity"
+            onClick={() => setShowMobileDetails(false)}
+          />
+          <div className="relative w-80 max-w-[85%] bg-card text-card-foreground p-5 shadow-2xl z-10 h-full border-l overflow-y-auto animate-in slide-in-from-right duration-200 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <span className="font-bold text-sm">Customer Details</span>
+              <button
+                onClick={() => setShowMobileDetails(false)}
+                className="p-1 rounded-lg text-muted-foreground hover:bg-muted"
+                aria-label="Close details"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-center pb-2">
+              <Avatar name={activeCustomer.name || activeCustomer.phone} size="lg" className="mx-auto mb-2" />
+              <h3 className="font-bold text-sm text-foreground">
+                {activeCustomer.name || 'Unnamed Contact'}
+              </h3>
+              <p className="text-xs font-mono text-muted-foreground mt-0.5">
+                {formatPhone(activeCustomer.phone)}
+              </p>
+            </div>
+
+            {/* Contact Details */}
+            <div className="space-y-3 text-xs border-t pt-3">
+              <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
+                Contact Info
+              </span>
+              <div className="flex items-center gap-2.5 text-foreground">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                <span className="font-mono">{formatPhone(activeCustomer.phone)}</span>
+              </div>
+              {activeCustomer.email && (
+                <div className="flex items-center gap-2.5 text-foreground">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  <span className="truncate">{activeCustomer.email}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Contact Type */}
+            <div className="space-y-2 text-xs border-t pt-3">
+              <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
+                Contact Type
+              </span>
+              <div>
+                {activeCustomer.contactType ? (
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                    style={{
+                      backgroundColor: `${activeCustomer.contactType.color || '#3B82F6'}20`,
+                      color: activeCustomer.contactType.color || '#3B82F6',
+                    }}
+                  >
+                    <FolderTree className="w-3.5 h-3.5 mr-1" />
+                    {activeCustomer.contactType.name}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Unassigned</span>
+                )}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-2 text-xs border-t pt-3">
+              <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
+                Assigned Tags
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {activeCustomer.tags.length > 0 ? (
+                  activeCustomer.tags.map((t) => (
+                    <span
+                      key={t.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold text-white"
+                      style={{ backgroundColor: t.color || '#10B981' }}
+                    >
+                      <TagIcon className="w-3 h-3 mr-1" />
+                      {t.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground">No tags assigned</span>
+                )}
+              </div>
+            </div>
+
+            {/* Messaging Window Info */}
+            <div className="space-y-2 text-xs border-t pt-3">
+              <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
+                Session Telemetry
+              </span>
+              <div className="space-y-1 text-muted-foreground text-[11px]">
+                <div>Last Customer Msg: {activeCustomer.lastCustomerMessageAt ? formatDate(activeCustomer.lastCustomerMessageAt) : 'Never'}</div>
+                <div>Window Status: {isWindowOpen ? 'Active (Open)' : 'Expired (Closed)'}</div>
+              </div>
             </div>
           </div>
         </div>

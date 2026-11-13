@@ -224,6 +224,7 @@ export default function CampaignsPage() {
 
         <Button
           size="sm"
+          className="w-full sm:w-auto"
           onClick={() => {
             resetWizard();
             setIsWizardOpen(true);
@@ -237,7 +238,7 @@ export default function CampaignsPage() {
       {/* Campaigns Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[650px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Campaign Name</TableHead>
@@ -440,33 +441,33 @@ export default function CampaignsPage() {
             </div>
 
             {/* Step Stepper Indicator */}
-            <div className="px-6 py-3 bg-muted/20 border-b flex items-center justify-between text-xs">
-              <div className={`flex items-center gap-1.5 ${wizardStep >= 1 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+            <div className="px-3 sm:px-6 py-2.5 sm:py-3 bg-muted/20 border-b flex items-center justify-between text-xs overflow-x-auto">
+              <div className={`flex items-center gap-1.5 shrink-0 ${wizardStep >= 1 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                 <span className="w-5 h-5 rounded-full border flex items-center justify-center text-[10px]">1</span>
-                <span>Details</span>
+                <span className={wizardStep === 1 ? 'inline' : 'hidden sm:inline'}>Details</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
 
-              <div className={`flex items-center gap-1.5 ${wizardStep >= 2 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+              <div className={`flex items-center gap-1.5 shrink-0 ${wizardStep >= 2 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                 <span className="w-5 h-5 rounded-full border flex items-center justify-center text-[10px]">2</span>
-                <span>Template</span>
+                <span className={wizardStep === 2 ? 'inline' : 'hidden sm:inline'}>Template</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
 
-              <div className={`flex items-center gap-1.5 ${wizardStep >= 3 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+              <div className={`flex items-center gap-1.5 shrink-0 ${wizardStep >= 3 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                 <span className="w-5 h-5 rounded-full border flex items-center justify-center text-[10px]">3</span>
-                <span>Audience</span>
+                <span className={wizardStep === 3 ? 'inline' : 'hidden sm:inline'}>Audience</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
 
-              <div className={`flex items-center gap-1.5 ${wizardStep >= 4 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+              <div className={`flex items-center gap-1.5 shrink-0 ${wizardStep >= 4 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                 <span className="w-5 h-5 rounded-full border flex items-center justify-center text-[10px]">4</span>
-                <span>Review</span>
+                <span className={wizardStep === 4 ? 'inline' : 'hidden sm:inline'}>Review</span>
               </div>
             </div>
 
             {/* Wizard Content Body */}
-            <div className="p-6 flex-1 overflow-y-auto space-y-4">
+            <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4">
               {wizardError && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400">
                   {wizardError}

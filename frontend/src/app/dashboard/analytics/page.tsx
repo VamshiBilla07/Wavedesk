@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top 5 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
         {/* Total Audience */}
         <Card className="shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -206,42 +206,44 @@ export default function AnalyticsPage() {
                 No messaging traffic recorded in the past 14 days.
               </div>
             ) : (
-              <div className="h-56 flex items-end gap-2 pt-6 pb-2">
-                {timeseriesData?.timeseries?.map((day) => {
-                  const outHeight = Math.round((day.outbound / maxDailyVolume) * 160);
-                  const inHeight = Math.round((day.inbound / maxDailyVolume) * 160);
-                  const label = day.date.slice(5); // "MM-DD"
+              <div className="overflow-x-auto pb-2 -mx-2 px-2">
+                <div className="h-56 min-w-[440px] flex items-end gap-2 pt-6 pb-2">
+                  {timeseriesData?.timeseries?.map((day) => {
+                    const outHeight = Math.round((day.outbound / maxDailyVolume) * 160);
+                    const inHeight = Math.round((day.inbound / maxDailyVolume) * 160);
+                    const label = day.date.slice(5); // "MM-DD"
 
-                  return (
-                    <div
-                      key={day.date}
-                      className="flex-1 flex flex-col items-center justify-end h-full group relative"
-                    >
-                      {/* Tooltip */}
-                      <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-popover text-popover-foreground text-[10px] p-1.5 rounded-md shadow-md border pointer-events-none whitespace-nowrap z-10">
-                        <div className="font-bold">{day.date}</div>
-                        <div>Out: {day.outbound} • In: {day.inbound}</div>
+                    return (
+                      <div
+                        key={day.date}
+                        className="flex-1 flex flex-col items-center justify-end h-full group relative"
+                      >
+                        {/* Tooltip */}
+                        <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-popover text-popover-foreground text-[10px] p-1.5 rounded-md shadow-md border pointer-events-none whitespace-nowrap z-10">
+                          <div className="font-bold">{day.date}</div>
+                          <div>Out: {day.outbound} • In: {day.inbound}</div>
+                        </div>
+
+                        {/* Stacked Bar */}
+                        <div className="w-full max-w-[24px] flex flex-col justify-end rounded-xs overflow-hidden bg-muted/40 h-[170px]">
+                          <div
+                            style={{ height: `${inHeight}px` }}
+                            className="w-full bg-blue-500 transition-all duration-300"
+                          />
+                          <div
+                            style={{ height: `${outHeight}px` }}
+                            className="w-full bg-emerald-500 transition-all duration-300"
+                          />
+                        </div>
+
+                        {/* Date Label */}
+                        <span className="text-[9px] text-muted-foreground mt-2 truncate max-w-full">
+                          {label}
+                        </span>
                       </div>
-
-                      {/* Stacked Bar */}
-                      <div className="w-full max-w-[24px] flex flex-col justify-end rounded-xs overflow-hidden bg-muted/40 h-[170px]">
-                        <div
-                          style={{ height: `${inHeight}px` }}
-                          className="w-full bg-blue-500 transition-all duration-300"
-                        />
-                        <div
-                          style={{ height: `${outHeight}px` }}
-                          className="w-full bg-emerald-500 transition-all duration-300"
-                        />
-                      </div>
-
-                      {/* Date Label */}
-                      <span className="text-[9px] text-muted-foreground mt-2 truncate max-w-full">
-                        {label}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </CardContent>

@@ -207,7 +207,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 max-w-lg mb-4">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 max-w-lg mb-4 h-auto p-1.5 gap-1">
           <TabsTrigger value="whatsapp">WhatsApp API</TabsTrigger>
           <TabsTrigger value="webhook">Webhooks</TabsTrigger>
           <TabsTrigger value="company">Company</TabsTrigger>
@@ -332,17 +332,19 @@ export default function SettingsPage() {
               )}
             </CardContent>
 
-            <CardFooter className="flex justify-between border-t pt-4">
+            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between border-t pt-4">
               <Button
                 variant="outline"
                 onClick={() => testConnectionMutation.mutate()}
                 isLoading={testConnectionMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 Test Connection
               </Button>
               <Button
                 onClick={() => updateWhatsappMutation.mutate()}
                 isLoading={updateWhatsappMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 Save Credentials
               </Button>
@@ -432,7 +434,7 @@ export default function SettingsPage() {
         {/* Tab 4: Team Members */}
         <TabsContent value="team" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
@@ -440,7 +442,7 @@ export default function SettingsPage() {
                 </div>
                 <CardDescription>Manage users with access to your Wavedesk company dashboard</CardDescription>
               </div>
-              <Button onClick={() => setIsUserModalOpen(true)} size="sm">
+              <Button onClick={() => setIsUserModalOpen(true)} size="sm" className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-1.5" />
                 Add Member
               </Button>

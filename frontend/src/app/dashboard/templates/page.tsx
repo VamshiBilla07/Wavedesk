@@ -213,12 +213,13 @@ export default function TemplatesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={() => syncMutation.mutate()}
             isLoading={syncMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             <RefreshCw className={`w-4 h-4 mr-1.5 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
             Sync from Meta
@@ -226,6 +227,7 @@ export default function TemplatesPage() {
 
           <Button
             size="sm"
+            className="flex-1 sm:flex-none"
             onClick={() => {
               resetForm();
               setIsCreateOpen(true);
@@ -238,8 +240,8 @@ export default function TemplatesPage() {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 bg-card p-3 rounded-xl border">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-card p-3 rounded-xl border">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search templates by name..."
@@ -249,11 +251,11 @@ export default function TemplatesPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex items-center gap-2">
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-9 px-3 rounded-lg border bg-background text-xs"
+            className="h-9 px-3 rounded-lg border bg-background text-xs w-full sm:w-auto"
           >
             <option value="ALL">All Categories</option>
             <option value="MARKETING">Marketing</option>
@@ -264,7 +266,7 @@ export default function TemplatesPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 px-3 rounded-lg border bg-background text-xs"
+            className="h-9 px-3 rounded-lg border bg-background text-xs w-full sm:w-auto"
           >
             <option value="ALL">All Statuses</option>
             <option value="APPROVED">Approved</option>
@@ -278,7 +280,7 @@ export default function TemplatesPage() {
       {/* Templates Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[650px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Template Name</TableHead>
@@ -558,8 +560,8 @@ export default function TemplatesPage() {
               </form>
 
               {/* Right Live WhatsApp Mockup */}
-              <div className="p-6 bg-muted/20 flex flex-col items-center justify-center">
-                <div className="w-[300px] rounded-3xl border-4 border-slate-700 bg-[#0B141A] shadow-xl overflow-hidden flex flex-col text-white">
+              <div className="p-4 sm:p-6 bg-muted/20 flex flex-col items-center justify-center">
+                <div className="w-full max-w-[280px] sm:max-w-[300px] rounded-3xl border-4 border-slate-700 bg-[#0B141A] shadow-xl overflow-hidden flex flex-col text-white">
                   {/* Phone Top Notch & WhatsApp App Bar */}
                   <div className="bg-[#1F2C34] p-3 flex items-center gap-2 border-b border-[#2A3942]">
                     <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white">

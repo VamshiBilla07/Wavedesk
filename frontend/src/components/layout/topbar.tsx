@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, LogOut, Building2, User } from 'lucide-react';
+import { Search, LogOut, Building2, MessageSquare } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { api } from '@/lib/api';
@@ -48,13 +48,13 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   };
 
   return (
-    <header className="h-16 border-b bg-card text-card-foreground px-4 md:px-6 flex items-center justify-between gap-4 sticky top-0 z-30">
-      {/* Left: Mobile menu toggle + Global search */}
-      <div className="flex items-center gap-3 flex-1 max-w-md">
+    <header className="h-16 border-b bg-card text-card-foreground px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30">
+      {/* Left: Mobile menu toggle + Mobile brand + Global search */}
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 max-w-md">
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="md:hidden p-2 rounded-lg text-muted-foreground hover:bg-accent"
+            className="md:hidden p-2 -ml-1 rounded-lg text-muted-foreground hover:bg-accent shrink-0"
             aria-label="Open navigation menu"
           >
             <svg
@@ -72,6 +72,14 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             </svg>
           </button>
         )}
+
+        {/* Mobile brand mark */}
+        <div className="md:hidden flex items-center gap-2 font-bold text-sm text-foreground shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-xs">
+            <MessageSquare className="w-3.5 h-3.5" />
+          </div>
+          <span className="truncate max-w-[90px] sm:max-w-none">Wavedesk</span>
+        </div>
 
         <div className="relative w-full max-w-sm hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
