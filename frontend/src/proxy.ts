@@ -13,7 +13,7 @@ export function handleRouteProtection(request: NextRequest): NextResponse | unde
   const token = request.cookies.get(AUTH_COOKIE)?.value;
 
   const isAuthRoute = pathname.startsWith('/auth');
-  const isDashboardRoute = pathname.startsWith('/dashboard') || pathname === '/';
+  const isDashboardRoute = pathname.startsWith('/dashboard');
 
   // If user is trying to access protected dashboard routes without a session cookie
   if (isDashboardRoute && !token) {
