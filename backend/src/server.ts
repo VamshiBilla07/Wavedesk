@@ -7,7 +7,19 @@ import dotenv from 'dotenv';
 import { z } from 'zod';
 import { prisma } from './services/database';
 import { isRedisReady, redis } from './services/cache';
+import { initSocket, closeSocket } from './services/socket';
 import authRouter from './routes/auth';
+import webhooksRouter from './routes/webhooks';
+import settingsRouter from './routes/settings';
+import contactTypesRouter from './routes/contactTypes';
+import tagsRouter from './routes/tags';
+import customersRouter from './routes/customers';
+import messagesRouter from './routes/messages';
+import templatesRouter from './routes/templates';
+import campaignsRouter from './routes/campaigns';
+import analyticsRouter from './routes/analytics';
+import { authLimiter, apiLimiter, webhookLimiter } from './middleware/rateLimiter';
+import { resumeRunningCampaigns } from './services/whatsapp';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load environment variables
@@ -101,22 +113,42 @@ app.get('/ready', async (_req: Request, res: Response) => {
   }
 });
 
+// Rate limiting middleware
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
+app.use('/api/webhooks', webhookLimiter);
+app.use('/api', apiLimiter);
+
 // API Routes
 app.use('/api/auth', authRouter);
+app.use('/api/webhooks', webhooksRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/api/contact-types', contactTypesRouter);
+app.use('/api/tags', tagsRouter);
+app.use('/api/customers', customersRouter);
+app.use('/api/messages', messagesRouter);
+app.use('/api/templates', templatesRouter);
+app.use('/api/campaigns', campaignsRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // Centralized error handling middleware
 app.use(errorHandler);
 
 export const server = http.createServer(app);
 
+// Initialize Socket.io server
+export const io = initSocket(server);
+
 // Start server if not in test environment
 if (process.env.NODE_ENV !== 'test') {
   server.listen(config.PORT, () => {
     console.log(`[Wavedesk API] Server running on port ${config.PORT} (${config.NODE_ENV})`);
+    resumeRunningCampaigns();
   });
 
   const shutdown = async (signal: string) => {
     console.log(`\n[Wavedesk API] Received ${signal}. Gracefully shutting down...`);
+    await closeSocket();
     server.close(async () => {
       console.log('[Wavedesk API] HTTP server closed.');
       await prisma.$disconnect().catch(() => {});

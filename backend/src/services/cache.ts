@@ -97,6 +97,14 @@ export async function invalidate(pattern: string): Promise<void> {
 }
 
 /**
+ * Convenience helper to invalidate company-scoped cache keys
+ */
+export async function invalidateCompany(companyId: string, resource?: string): Promise<void> {
+  const pattern = resource ? `co:${companyId}:${resource}:*` : `co:${companyId}:*`;
+  await invalidate(pattern);
+}
+
+/**
  * Returns cache metrics (hits, misses, hit rate)
  */
 export function getCacheStats(): { hits: number; misses: number; hitRate: number } {
