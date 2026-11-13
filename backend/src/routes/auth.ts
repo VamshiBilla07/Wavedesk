@@ -83,6 +83,7 @@ router.post(
         token,
       });
     } catch (err) {
+      console.error('[Auth Signup Error]:', err);
       next(err);
     }
   }
@@ -137,6 +138,7 @@ router.post(
         token,
       });
     } catch (err) {
+      console.error('[Auth Login Error]:', err);
       next(err);
     }
   }

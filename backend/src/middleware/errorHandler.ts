@@ -75,6 +75,7 @@ export function errorHandler(
   }
 
   // Unhandled internal server error
+  console.error('[Unhandled Error]', err);
   const message =
     process.env.NODE_ENV === 'production'
       ? 'An unexpected internal error occurred'
